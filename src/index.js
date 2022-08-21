@@ -1,43 +1,42 @@
 import './css/styles.css';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import debounce from 'lodash.debounce';
-
 import { fetchCountries } from './fetchCountries';
 
 const DEBOUNCE_DELAY = 300;
 
 const refs = {
-  countriesListEl: document.querySelector('.country-list'),
-  countryInfoEl: document.querySelector('.country-info'),
-  countryInputEl: document.querySelector('#search-box'),
+  listEl: document.querySelector('.country-list'),
+  infoEl: document.querySelector('.country-info'),
+  inputEl: document.querySelector('#search-box'),
 };
 
 const getCountryName = e => e.target.value.trim().toLowerCase();
 
-const renderSearchResultMarkup = countriesArr => {
-  if (countriesArr.length > 10) {
+const renderMarkup = countriesList => {
+  if (countriesList.length > 10) {
     return Promise.reject('too many');
   }
 
-  if (countriesArr.length > 1) {
+  if (countriesList.length > 1) {
     return {
       type: 'list',
-      markup: countriesArr
+      markup: countriesList
         .map(
           country =>
-            `<li><span><img src=${country.flags.svg} alt=""></span>${country.name.official}</li>`
+            `<li><span><img  class="flag" src=${country.flags.svg} alt="flag"></span>
+            <p>${country.name.official}</p></li>`
         )
         .join(''),
     };
   }
-  if (countriesArr.length === 1) {
-    const country = countriesArr[0];
+  if (countriesList.length === 1) {
+    const country = countriesList[0];
     return {
-      type: 'details',
+      type: 'one',
       markup: `
-    <h2><span><img src=${country.flags.svg} alt=""></span>${
-        country.name.official
-      }</h2>
+    <span><img class="flag" src=${country.flags.svg} alt="flag"></span>
+    <h2>${country.name.official}</h2>
     <p>Capital: ${country.capital}</p>
     <p>Population: ${country.population}</p>
     <p>Languages: ${Object.values(country.languages)}</p>    
@@ -45,31 +44,26 @@ const renderSearchResultMarkup = countriesArr => {
     };
   }
 };
+// ;
 
 const clearResult = () => {
-  refs.countryInfoEl.innerHTML = '';
-  refs.countriesListEl.innerHTML = '';
+  refs.infoEl.innerHTML = '';
+  refs.listEl.innerHTML = '';
 };
 
 const addSearchResult = searchResultMarkup => {
   clearResult();
 
   if (searchResultMarkup.type === 'list') {
-    refs.countriesListEl.insertAdjacentHTML(
-      'beforeend',
-      searchResultMarkup.markup
-    );
-  } else if (searchResultMarkup.type === 'details') {
-    refs.countryInfoEl.insertAdjacentHTML(
-      'beforeend',
-      searchResultMarkup.markup
-    );
+    refs.listEl.insertAdjacentHTML('beforeend', searchResultMarkup.markup);
+  } else if (searchResultMarkup.type === 'one') {
+    refs.infoEl.insertAdjacentHTML('beforeend', searchResultMarkup.markup);
   }
 };
 
-const alarmToManyCountries = () => {
+const alarmToMany = () => {
   clearResult();
-  Notify.info('Too many matches found. Please enter a more specific name.');
+  Notify.warning('Too many matches found. Please enter a more specific name.');
 };
 
 const alarmNotFound = () => {
@@ -83,7 +77,7 @@ const errorsHandler = error => {
     return;
   }
   if (error === 'too many') {
-    alarmToManyCountries();
+    alarmToMany();
     return;
   }
   console.log(error);
@@ -98,12 +92,9 @@ const doSearch = e => {
   }
 
   fetchCountries(searchedCountry)
-    .then(renderSearchResultMarkup)
+    .then(renderMarkup)
     .then(addSearchResult)
     .catch(errorsHandler);
 };
 
-refs.countryInputEl.addEventListener(
-  'input',
-  debounce(doSearch, DEBOUNCE_DELAY)
-);
+refs.inputEl.addEventListener('input', debounce(doSearch, DEBOUNCE_DELAY));

@@ -18,3 +18,17 @@ body {
   max-width: 320px;
   margin-bottom: 16px;
 }
+
+.flag {
+  width: 200px;
+}
+
+.country-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+li {
+  padding-bottom: 30px;
+}
